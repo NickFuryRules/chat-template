@@ -7,15 +7,17 @@
   <title>Chat Widget</title>
 </head>
 <body>
+  <!-- Optional: show who will be used -->
   <div style="margin:20px;">
+    <h1>Test Version 1.0</h1>
     <p><strong>Customer Name:</strong> John Doe</p>
-    <button id="startChatBtn" disabled>Start Chat</button>
+    <p>Click the chat bubble to start.</p>
   </div>
 
   <!-- Chat widget mount point -->
   <div id="divicw" data-bind="79170865-2226-4987-A913-565D49053818" data-org=""></div>
 
-  <!-- Widget bootstrap -->
+  <!-- Widget bootstrap (your original) -->
   <script>
     var i = {
       t: function (t) {
@@ -58,31 +60,58 @@
     i.t(function (t) { });
   </script>
 
-  <!-- Custom script with hardcoded customerName -->
+  <!-- Prime custom fields so bubble click uses them -->
   <script>
-    // Hardcoded value
-    const customerName = "John Doe"; // change this to any dynamic value if needed
+    // Hardcode your value here (or populate from your session/app)
+    const customerName = "John Doe";
 
-    // Enable Start button once widget is ready
+    // To avoid duplicate priming if the widget reinitializes
+    let fieldsPrimed = false;
+
+    // When the widget is fully loaded/ready
     imichatwidget.on("imichat-widget:ready", function(appId) {
-      document.getElementById('startChatBtn').disabled = false;
-      console.log("Widget ready. Using customerName:", customerName);
-    });
+      if (fieldsPrimed) return;
 
-    // When Start Chat is clicked
-    document.getElementById('startChatBtn').addEventListener('click', function () {
-      // Build payload with hardcoded customerName
       const payload = JSON.stringify({
         custom_chat_fields: {
-          customerName: customerName // <-- must match Conversation Field key in Engage
+          // Key must match your Conversation Field key in Engage
+          customerName: customerName
         }
       });
 
-      // Initialize the widget with custom variable
-      imichatwidget.init(payload, function () {
-        imichatwidget.show();
-        imichatwidget.maximizeWindow();
-      });
+      // Prefer update() to set fields for the next/new conversation
+      try {
+        if (typeof imichatwidget.update === "function") {
+          imichatwidget.update(payload, function() {
+            fieldsPrimed = true;
+            console.log("Custom fields primed via update():", payload);
+          });
+        } else {
+          // Fallback: some deployments only expose init()
+          imichatwidget.init(payload, function () {
+            fieldsPrimed = true;
+            console.log("Custom fields primed via init():", payload);
+          });
+        }
+      } catch (e) {
+        console.error("Failed to prime custom fields:", e);
+      }
+    });
+
+    // Optional safety net: if your SDK exposes an "open" event, we ensure it's primed
+    // (This won’t double-apply because of the 'fieldsPrimed' guard)
+    imichatwidget.on && imichatwidget.on("imichat-widget:open", function() {
+      if (!fieldsPrimed) {
+        const payload = JSON.stringify({ custom_chat_fields: { customerName } });
+        try {
+          (imichatwidget.update || imichatwidget.init).call(imichatwidget, payload, function(){
+            fieldsPrimed = true;
+            console.log("Custom fields primed on open event.");
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
     });
   </script>
 </body>
