@@ -7,17 +7,16 @@
   <title>Chat Widget</title>
 </head>
 <body>
-  <!-- Optional: show who will be used -->
+  <h1>Test Version 1.1</h1>
   <div style="margin:20px;">
-    <h1>Test Version 1.0</h1>
     <p><strong>Customer Name:</strong> John Doe</p>
-    <p>Click the chat bubble to start.</p>
+    <p>Click the chat bubble below to start your conversation.</p>
   </div>
 
   <!-- Chat widget mount point -->
   <div id="divicw" data-bind="79170865-2226-4987-A913-565D49053818" data-org=""></div>
 
-  <!-- Widget bootstrap (your original) -->
+  <!-- Widget bootstrap (unchanged) -->
   <script>
     var i = {
       t: function (t) {
@@ -60,58 +59,27 @@
     i.t(function (t) { });
   </script>
 
-  <!-- Prime custom fields so bubble click uses them -->
+  <!-- Prime the widget with custom variable AFTER load -->
   <script>
-    // Hardcode your value here (or populate from your session/app)
+    // Hardcoded customer name
     const customerName = "John Doe";
 
-    // To avoid duplicate priming if the widget reinitializes
-    let fieldsPrimed = false;
-
-    // When the widget is fully loaded/ready
+    // Wait for widget to be ready before initializing custom fields
     imichatwidget.on("imichat-widget:ready", function(appId) {
-      if (fieldsPrimed) return;
+      console.log("Widget ready — initializing custom fields.");
 
+      // Build payload (must be JSON string)
       const payload = JSON.stringify({
         custom_chat_fields: {
-          // Key must match your Conversation Field key in Engage
-          customerName: customerName
+          customerName: customerName // must match key configured in Engage
         }
       });
 
-      // Prefer update() to set fields for the next/new conversation
-      try {
-        if (typeof imichatwidget.update === "function") {
-          imichatwidget.update(payload, function() {
-            fieldsPrimed = true;
-            console.log("Custom fields primed via update():", payload);
-          });
-        } else {
-          // Fallback: some deployments only expose init()
-          imichatwidget.init(payload, function () {
-            fieldsPrimed = true;
-            console.log("Custom fields primed via init():", payload);
-          });
-        }
-      } catch (e) {
-        console.error("Failed to prime custom fields:", e);
-      }
-    });
-
-    // Optional safety net: if your SDK exposes an "open" event, we ensure it's primed
-    // (This won’t double-apply because of the 'fieldsPrimed' guard)
-    imichatwidget.on && imichatwidget.on("imichat-widget:open", function() {
-      if (!fieldsPrimed) {
-        const payload = JSON.stringify({ custom_chat_fields: { customerName } });
-        try {
-          (imichatwidget.update || imichatwidget.init).call(imichatwidget, payload, function(){
-            fieldsPrimed = true;
-            console.log("Custom fields primed on open event.");
-          });
-        } catch (e) {
-          console.error(e);
-        }
-      }
+      // Initialize before chat starts
+      imichatwidget.init(payload, function() {
+        console.log("Custom field 'customerName' initialized:", customerName);
+        // Widget bubble now carries this value when chat starts
+      });
     });
   </script>
 </body>
