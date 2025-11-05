@@ -7,7 +7,7 @@
   <title>Chat Widget</title>
 </head>
 <body>
-  <h1>Test Version 1.1</h1>
+  <h1>Test Version 1.2</h1>
   <div style="margin:20px;">
     <p><strong>Customer Name:</strong> John Doe</p>
     <p>Click the chat bubble below to start your conversation.</p>
@@ -33,6 +33,9 @@
               var e = document.createElement("script");
               e.innerHTML = this.responseText;
               t.parentNode.insertBefore(e, t.nextSibling);
+              
+              // After script is inserted, setup widget initialization
+              setupWidgetInit();
             }
           };
           o.open("GET", e, true);
@@ -59,28 +62,49 @@
     i.t(function (t) { });
   </script>
 
-  <!-- Prime the widget with custom variable AFTER load -->
+  <!-- Custom field initialization -->
   <script>
     // Hardcoded customer name
     const customerName = "John Doe";
 
-    // Wait for widget to be ready before initializing custom fields
-    imichatwidget.on("imichat-widget:ready", function(appId) {
-      console.log("Widget ready — initializing custom fields.");
+    function setupWidgetInit() {
+      console.log("Setting up widget initialization...");
+      
+      // Poll for imichatwidget object availability
+      const checkWidget = setInterval(function() {
+        if (typeof imichatwidget !== 'undefined') {
+          clearInterval(checkWidget);
+          console.log("imichatwidget object found!");
+          
+          // Now setup the ready listener
+          imichatwidget.on("imichat-widget:ready", function(appId) {
+            console.log("Widget ready event fired — initializing custom fields.");
+            console.log("App ID:", appId);
 
-      // Build payload (must be JSON string)
-      const payload = JSON.stringify({
-        custom_chat_fields: {
-          customerName: customerName // must match key configured in Engage
+            // Build payload (must be JSON string)
+            const payload = JSON.stringify({
+              custom_chat_fields: {
+                customerName: customerName
+              }
+            });
+
+            // Initialize before chat starts
+            imichatwidget.init(payload, function(response) {
+              console.log("Custom field 'customerName' initialized:", customerName);
+              console.log("Init callback response:", response);
+            });
+          });
         }
-      });
+      }, 100); // Check every 100ms
 
-      // Initialize before chat starts
-      imichatwidget.init(payload, function() {
-        console.log("Custom field 'customerName' initialized:", customerName);
-        // Widget bubble now carries this value when chat starts
-      });
-    });
+      // Safety timeout after 10 seconds
+      setTimeout(function() {
+        clearInterval(checkWidget);
+        if (typeof imichatwidget === 'undefined') {
+          console.error("imichatwidget object never became available");
+        }
+      }, 10000);
+    }
   </script>
 </body>
 </html>
