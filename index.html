@@ -87,13 +87,14 @@
             const payload = JSON.stringify({
               custom_chat_fields: {
                 customerName: customerName,
-                userToken: userToken
+                customerToken: userToken
               }
             });
 
             // Initialize before chat starts
             imichatwidget.init(payload, function(response) {
               console.log("Custom field 'customerName' initialized:", customerName);
+              console.log("Custom field 'customerToken' initialized:", userToken);
               console.log("Init callback response:", response);
             });
           });
