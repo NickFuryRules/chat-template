@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta http-equiv="x-ua-compatible" content="ie=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chat Widget</title>
+  <title>Chat Widget V1.0</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -185,6 +185,7 @@
       const customerStatusSelect = document.getElementById('customerStatus');
       const jwtValueInput = document.getElementById('jwtValue');
       const transIdInput = document.getElementById('transId');
+      const conversationIdInput = document.getElementById('conversationId');
       const existingCustomerFields = document.getElementById('existingCustomerFields');
       const formSection = document.getElementById('formSection');
       const chatSection = document.getElementById('chatSection');
@@ -198,6 +199,7 @@
           // Clear the fields when hidden
           jwtValueInput.value = '';
           transIdInput.value = '';
+          conversationIdInput.value = '';
         }
       });
 
@@ -219,6 +221,7 @@
         if (customerStatus === 'existing') {
           const jwtValue = jwtValueInput.value.trim();
           const transId = transIdInput.value.trim();
+          const conversationId = conversationIdInput.value.trim();
           
           if (!jwtValue) {
             alert('Please enter JWT value for existing customer');
@@ -228,16 +231,21 @@
             alert('Please enter Transaction ID for existing customer');
             return;
           }
+          if (!conversationId) {
+            alert('Please enter Conversation ID for existing customer');
+            return;
+          }
 
-          // Store data including JWT and TransId for existing customers
+          // Store data including JWT, TransId, and ConversationId for existing customers
           window.widgetData = {
             userToken: userToken,
             customerStatus: customerStatus,
             jwtValue: jwtValue,
-            transId: transId
+            transId: transId,
+            conversationId: conversationId
           };
         } else {
-          // Store data for new customers (no JWT or TransId needed)
+          // Store data for new customers (no JWT, TransId, or ConversationId needed)
           window.widgetData = {
             userToken: userToken,
             customerStatus: customerStatus
@@ -273,10 +281,11 @@
               customerStatus: window.widgetData.customerStatus
             };
 
-            // Add JWT and TransId only if customer is existing
+            // Add JWT, TransId, and ConversationId only if customer is existing
             if (window.widgetData.customerStatus === 'existing') {
               customFields.jwtValue = window.widgetData.jwtValue;
               customFields.transId = window.widgetData.transId;
+              customFields.conversationId = window.widgetData.conversationId;
             }
 
             const payload = JSON.stringify({
@@ -285,7 +294,8 @@
 
             // Initialize before chat starts
             imichatwidget.init(payload, function(response) {
-              console.log("Custom fields initialized:", customFields);
+              console.log("Custom fields being sent:", customFields);
+              console.log("Payload being sent:", payload);
               console.log("Init callback response:", response);
             });
           });
