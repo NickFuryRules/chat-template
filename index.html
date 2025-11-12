@@ -74,6 +74,12 @@
     #chatSection {
       display: none;
     }
+    .conditional-fields {
+      display: none;
+    }
+    .required {
+      color: red;
+    }
   </style>
 </head>
 <body>
@@ -82,17 +88,29 @@
     
     <div id="formSection">
       <div class="form-group">
-        <label for="userToken">User Token:</label>
+        <label for="userToken">User Token: <span class="required">*</span></label>
         <input type="text" id="userToken" placeholder="Enter your user token" />
       </div>
       
       <div class="form-group">
-        <label for="customerStatus">Customer Status:</label>
+        <label for="customerStatus">Customer Status: <span class="required">*</span></label>
         <select id="customerStatus">
           <option value="">-- Select Status --</option>
           <option value="new">New</option>
           <option value="existing">Existing</option>
         </select>
+      </div>
+
+      <div id="existingCustomerFields" class="conditional-fields">
+        <div class="form-group">
+          <label for="jwtValue">JWT Value: <span class="required">*</span></label>
+          <input type="text" id="jwtValue" placeholder="Enter JWT value" />
+        </div>
+        
+        <div class="form-group">
+          <label for="transId">Transaction ID: <span class="required">*</span></label>
+          <input type="text" id="transId" placeholder="Enter transaction ID" />
+        </div>
       </div>
       
       <button id="startChatBtn">Start Chat</button>
@@ -160,8 +178,23 @@
       const startChatBtn = document.getElementById('startChatBtn');
       const userTokenInput = document.getElementById('userToken');
       const customerStatusSelect = document.getElementById('customerStatus');
+      const jwtValueInput = document.getElementById('jwtValue');
+      const transIdInput = document.getElementById('transId');
+      const existingCustomerFields = document.getElementById('existingCustomerFields');
       const formSection = document.getElementById('formSection');
       const chatSection = document.getElementById('chatSection');
+
+      // Show/hide conditional fields based on customer status
+      customerStatusSelect.addEventListener('change', function() {
+        if (this.value === 'existing') {
+          existingCustomerFields.style.display = 'block';
+        } else {
+          existingCustomerFields.style.display = 'none';
+          // Clear the fields when hidden
+          jwtValueInput.value = '';
+          transIdInput.value = '';
+        }
+      });
 
       startChatBtn.addEventListener('click', function() {
         const userToken = userTokenInput.value.trim();
@@ -177,11 +210,34 @@
           return;
         }
 
-        // Store data for widget initialization
-        window.widgetData = {
-          userToken: userToken,
-          customerStatus: customerStatus
-        };
+        // Additional validation for existing customers
+        if (customerStatus === 'existing') {
+          const jwtValue = jwtValueInput.value.trim();
+          const transId = transIdInput.value.trim();
+          
+          if (!jwtValue) {
+            alert('Please enter JWT value for existing customer');
+            return;
+          }
+          if (!transId) {
+            alert('Please enter Transaction ID for existing customer');
+            return;
+          }
+
+          // Store data including JWT and TransId for existing customers
+          window.widgetData = {
+            userToken: userToken,
+            customerStatus: customerStatus,
+            jwtValue: jwtValue,
+            transId: transId
+          };
+        } else {
+          // Store data for new customers (no JWT or TransId needed)
+          window.widgetData = {
+            userToken: userToken,
+            customerStatus: customerStatus
+          };
+        }
 
         // Hide form, show chat section
         formSection.style.display = 'none';
@@ -207,17 +263,24 @@
             console.log("App ID:", appId);
 
             // Build payload with collected data
+            const customFields = {
+              userToken: window.widgetData.userToken,
+              customerStatus: window.widgetData.customerStatus
+            };
+
+            // Add JWT and TransId only if customer is existing
+            if (window.widgetData.customerStatus === 'existing') {
+              customFields.jwtValue = window.widgetData.jwtValue;
+              customFields.transId = window.widgetData.transId;
+            }
+
             const payload = JSON.stringify({
-              custom_chat_fields: {
-                userToken: window.widgetData.userToken,
-                customerStatus: window.widgetData.customerStatus
-              }
+              custom_chat_fields: customFields
             });
 
             // Initialize before chat starts
             imichatwidget.init(payload, function(response) {
-              console.log("Custom field 'userToken' initialized:", window.widgetData.userToken);
-              console.log("Custom field 'customerStatus' initialized:", window.widgetData.customerStatus);
+              console.log("Custom fields initialized:", customFields);
               console.log("Init callback response:", response);
             });
           });
