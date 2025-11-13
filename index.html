@@ -113,8 +113,13 @@
         </div>
         
         <div class="form-group">
-          <label for="conversationId">Conversation ID: <span class="required">*</span></label>
-          <input type="text" id="conversationId" placeholder="Enter conversation ID" />
+          <label for="conversationId">Parloa Conversation ID: <span class="required">*</span></label>
+          <input type="text" id="conversationId" placeholder="Enter Parloa conversation ID" />
+        </div>
+
+        <div class="form-group">
+          <label for="wxcConversationId">WxC Conversation ID: <span class="required">*</span></label>
+          <input type="text" id="wxcConversationId" placeholder="Enter WxC Conversation ID" />
         </div>
       </div>
       
@@ -186,6 +191,7 @@
       const jwtValueInput = document.getElementById('jwtValue');
       const transIdInput = document.getElementById('transId');
       const conversationIdInput = document.getElementById('conversationId');
+      const wxcConversationIdInput = document.getElementById('wxcConversationId');
       const existingCustomerFields = document.getElementById('existingCustomerFields');
       const formSection = document.getElementById('formSection');
       const chatSection = document.getElementById('chatSection');
@@ -200,6 +206,7 @@
           jwtValueInput.value = '';
           transIdInput.value = '';
           conversationIdInput.value = '';
+          wxcConversationIdInput.value = '';
         }
       });
 
@@ -222,6 +229,7 @@
           const jwtValue = jwtValueInput.value.trim();
           const transId = transIdInput.value.trim();
           const conversationId = conversationIdInput.value.trim();
+          const wxcConversationId = wxcConversationIdInput.value.trim();
           
           if (!jwtValue) {
             alert('Please enter JWT value for existing customer');
@@ -232,20 +240,25 @@
             return;
           }
           if (!conversationId) {
-            alert('Please enter Conversation ID for existing customer');
+            alert('Please enter Parloa Conversation ID for existing customer');
+            return;
+          }
+          if (!wxcConversationId) {
+            alert('Please enter WxC Conversation ID for existing customer');
             return;
           }
 
-          // Store data including JWT, TransId, and ConversationId for existing customers
+          // Store data including JWT, TransId, ConversationId, and WxC ConversationId for existing customers
           window.widgetData = {
             userToken: userToken,
             customerStatus: customerStatus,
             jwtValue: jwtValue,
             transId: transId,
-            conversationId: conversationId
+            conversationId: conversationId,
+            wxcConversationId: wxcConversationId
           };
         } else {
-          // Store data for new customers (no JWT, TransId, or ConversationId needed)
+          // Store data for new customers (no additional fields needed)
           window.widgetData = {
             userToken: userToken,
             customerStatus: customerStatus
@@ -281,11 +294,12 @@
               customerStatus: window.widgetData.customerStatus
             };
 
-            // Add JWT, TransId, and ConversationId only if customer is existing
+            // Add JWT, TransId, ConversationId, and WxC ConversationId only if customer is existing
             if (window.widgetData.customerStatus === 'existing') {
               customFields.jwtValue = window.widgetData.jwtValue;
               customFields.transId = window.widgetData.transId;
               customFields.conversationId = window.widgetData.conversationId;
+              customFields.wxcConversationId = window.widgetData.wxcConversationId;
             }
 
             const payload = JSON.stringify({
